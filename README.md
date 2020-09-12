@@ -7,6 +7,6 @@ Python requirments<br>
 - pip3.6
 
 pip commands for windows:<br>
-`$ pip install speechrecognition`
-`$ pip install pyaudio`
-`$ pip install playsound`
+`$ pip install speechrecognition` <br>
+`$ pip install pyaudio`<br>
+`$ pip install playsound`<br>
