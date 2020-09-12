@@ -4,6 +4,7 @@
 
 import speech_recognition as sr
 import playsound as ps
+import time
 
 
 # Initialize the recognizer
@@ -34,22 +35,27 @@ def SpeechToText():
 
 # Loop infinitely for user to
 # speak
-sound = ''
-#ps.playsound('demo.mp3')
+
 while(1):
 
     # Exception handling to handle
     # exceptions at the runtime
     try:
 
-        MyText = SpeechToText()
+        text = SpeechToText()
 
-        print("-> "+MyText)
+        print("-> "+text)
 
-        if MyText == 'hey google':
+        if text == 'hey google':
             print('activation phrase')
+            ps.playsound('start.wav')
+            command = SpeechToText()
+            time.sleep(0.1)
+            print('Google heard: ' + command)
 
-        if MyText == 'exit':
+            ps.playsound('end.wav')
+
+        if text == 'exit':
             exit()
         # SpeakText(MyText)
 
