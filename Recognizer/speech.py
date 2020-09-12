@@ -3,6 +3,7 @@
 
 
 import speech_recognition as sr
+import playsound as ps
 
 
 # Initialize the recognizer
@@ -33,7 +34,8 @@ def SpeechToText():
 
 # Loop infinitely for user to
 # speak
-
+sound = ''
+#ps.playsound('demo.mp3')
 while(1):
 
     # Exception handling to handle

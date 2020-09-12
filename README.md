@@ -9,3 +9,4 @@ Python requirments
 pip commands for windows:
     pip install speechrecognition
     pip install pyaudio
+    pip install playsound
