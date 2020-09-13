@@ -10,8 +10,8 @@ import time
 # Initialize the recognizer
 r = sr.Recognizer()
 
-# uses
 
+# https://www.thepythoncode.com/article/using-speech-recognition-to-convert-speech-to-text-python
 
 def SpeechToText():
     # use the microphone as source for input.
@@ -22,12 +22,12 @@ def SpeechToText():
         # the surrounding noise level
         r.adjust_for_ambient_noise(source2, duration=0.2)
 
-        print('Say: ')
+        print('Say: !')
         # listens for the user's input
         audio = r.listen(source2)
-
-        # Using google to recognize audio
-        text = r.recognize_google(audio)
+        print('worked')
+        # Using sphinx to recognize audio
+        text = r.recognize_sphinx(audio)
         # converts all text to lower case
         text = text.lower()
         return text
@@ -46,18 +46,17 @@ while(1):
 
         print("-> "+text)
 
-        if text == 'hey google':
+        if text == 'blue':
             print('activation phrase')
             ps.playsound('start.wav')
             command = SpeechToText()
             time.sleep(0.1)
-            print('Google heard: ' + command)
+            print('Sphnix heard: ' + command)
 
             ps.playsound('end.wav')
 
         if text == 'exit':
             exit()
-        # SpeakText(MyText)
 
     except sr.RequestError as e:
         print("Could not request results; {0}".format(e))

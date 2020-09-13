@@ -10,3 +10,4 @@ pip commands for windows:<br>
 `$ pip install speechrecognition` <br>
 `$ pip install pyaudio`<br>
 `$ pip install playsound`<br>
+`$ pip install pocketsphinx` <br>
