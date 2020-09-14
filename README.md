@@ -11,3 +11,12 @@ pip commands for windows:<br>
 `$ pip install pyaudio`<br>
 `$ pip install playsound`<br>
 `$ pip install pocketsphinx` <br>
+
+running the program with python 3.6 insde the Recogniser folder:<br>
+`$ python3 speech.py` <br>
+
+To text python verson run:<br>
+`$ python3` <br>
+or 
+`$ python` <br>
+It will show the the python version on the first line <br>
