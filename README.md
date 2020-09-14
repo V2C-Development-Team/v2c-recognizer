@@ -15,7 +15,7 @@ pip commands for windows:<br>
 running the program with python 3.6 insde the Recogniser folder:<br>
 `$ python3 speech.py` <br>
 
-To test python verson run:<br>
+To test python version run:<br>
 `$ python3` <br>
 or 
 `$ python` <br>
