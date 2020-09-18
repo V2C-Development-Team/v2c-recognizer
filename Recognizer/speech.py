@@ -26,8 +26,8 @@ def SpeechToText():
         # listens for the user's input
         audio = r.listen(source2)
         print('worked')
-        # Using sphinx to recognize audio
-        text = r.recognize_sphinx(audio)
+        # Using google to recognize audio
+        text = r.recognize_google(audio)
         # converts all text to lower case
         text = text.lower()
         return text
