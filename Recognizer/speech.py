@@ -10,9 +10,6 @@ import time
 # Initialize the recognizer
 r = sr.Recognizer()
 
-
-# https://www.thepythoncode.com/article/using-speech-recognition-to-convert-speech-to-text-python
-
 # This function uses the microphone to turn speech to text
 def SpeechToText():
     # use the microphone as source for input.
