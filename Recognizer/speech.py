@@ -27,7 +27,7 @@ def SpeechToText():
         audio = r.listen(source2)
         print('worked')
         # Using sphinx to recognize audio
-        text = r.recognize_sphinx(audio)
+        text = r.recognize_google(audio)
         # converts all text to lower case
         text = text.lower()
         return text
@@ -41,10 +41,14 @@ while(1):
     # Exception handling to handle
     # exceptions at the runtime
     try:
+        text = ''
+        option = input('Enter 1 for voice, or enter 2 for file:')
 
-        text = SpeechToText()
+        if option == '1':
 
-        print("-> "+text)
+            text = SpeechToText()
+
+            print("-> "+text)
 
         if text == 'blue':
             print('activation phrase')
