@@ -1,12 +1,14 @@
 # Python program to translate
 # speech to text
-
+# Sound files such as end.wav and start.wav are from windows system sounds
 
 import speech_recognition as sr
 import playsound as ps
 import time
 import asyncio
 import websockets
+import threading
+from _thread import start_new_thread
 
 # Sends string to websocket
 async def send(text):
@@ -53,6 +55,16 @@ def FileToText(file):
         text = text.lower()
         return text
 
+#Plays starting sound
+def playStartSound():
+    ps.playsound('start.wav')
+#Plays end sound
+def playEndSound():
+    ps.playsound('end.wav')
+
+#creating constant threads
+
+
 # Loop infinitely for user to
 # speak
 
@@ -64,25 +76,31 @@ while(1):
 
         text = ''
 
-        file = input('Enter file name (*.wav) or 0 for microphone: ')
-
-        # Decides to use file to text or mic to text
-        if file != '0':
-            text = FileToText(file)
-        else:
-            text = SpeechToText()
+        print('Say \"blue\" to input command from microphone, say "file" to input from file')
+        
+        text = SpeechToText()
 
         print("-> "+text)
 
+        #uses mic after activation phrase
         if text == 'blue':
             print('activation phrase')
-            ps.playsound('start.wav')
+            playStartSoundThread = threading.Thread(target=playStartSound)
+            playStartSoundThread.start()
+            
             command = SpeechToText()
-            time.sleep(0.1)
             print('Sphnix heard: ' + command)
-            ps.playsound('end.wav')
+            playEndSoundThread = threading.Thread(target=playEndSound)
+            playEndSoundThread.start()
+            asyncio.get_event_loop().run_until_complete(send(command))
+        # uses file to send command
+        elif text == 'file':
+            # askes user for file name input
+            name = input('Input file name: ')
+            command = FileToText(name)
             asyncio.get_event_loop().run_until_complete(send(command))
 
+        # exit condition
         if text == 'exit':
             exit()
 
