@@ -92,13 +92,13 @@ while(1):
             print('Sphnix heard: ' + command)
             playEndSoundThread = threading.Thread(target=playEndSound)
             playEndSoundThread.start()
-            asyncio.get_event_loop().run_until_complete(send(command))
+            asyncio.get_event_loop().run_in_executor(send(command))
         # uses file to send command
         elif text == 'file':
             # askes user for file name input
             name = input('Input file name: ')
             command = FileToText(name)
-            asyncio.get_event_loop().run_until_complete(send(command))
+            asyncio.get_event_loop().run_in_executor(send(command))
 
         # exit condition
         if text == 'exit':
