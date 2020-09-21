@@ -5,7 +5,14 @@
 import speech_recognition as sr
 import playsound as ps
 import time
+import asyncio
+import websockets
 
+# Sends string to websocket
+async def send(text):
+    uri = "ws://127.0.0.1:5698/"
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(text)
 
 # Initialize the recognizer
 r = sr.Recognizer()
@@ -73,8 +80,8 @@ while(1):
             command = SpeechToText()
             time.sleep(0.1)
             print('Sphnix heard: ' + command)
-
             ps.playsound('end.wav')
+            asyncio.get_event_loop().run_until_complete(send(command))
 
         if text == 'exit':
             exit()
