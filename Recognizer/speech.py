@@ -10,6 +10,8 @@ import websockets
 import threading
 from _thread import start_new_thread
 import json
+import signal
+import sys
 
 # Sends string to websocket
 async def send(command):
@@ -21,7 +23,6 @@ async def send(command):
 r = sr.Recognizer()
 
 # This function uses the microphone to turn speech to text
-
 
 def SpeechToText():
     # use the microphone as source for input.
@@ -68,7 +69,6 @@ def playStartSound():
 def playEndSound():
     ps.playsound('end.wav')
 
-
 # Initializing program
 # Registering recognizer with dispatcher
 register = {
@@ -76,6 +76,19 @@ register = {
     "app": "recognizer",
     "eavesdrop": False,
 }
+
+deregister = {
+    "action": "DEREGISTER_LISTENER",
+    "app": "recognizer"
+}
+
+def sigint_handler(sig, frame):
+    print('Exiting gracefully...')
+    asyncio.get_event_loop().run_until_complete(send(json.dumps(deregister)))
+    sys.exit(0)
+
+# On SIGINT deregister from dispatcher
+signal.signal(signal.SIGINT, sigint_handler)
 asyncio.get_event_loop().run_until_complete(send(json.dumps(register)))
 
 # Loop infinitely for user to
