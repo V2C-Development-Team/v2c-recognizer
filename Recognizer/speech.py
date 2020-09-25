@@ -24,7 +24,6 @@ r = sr.Recognizer()
 
 # This function uses the microphone to turn speech to text
 
-
 def SpeechToText():
     # use the microphone as source for input.
     with sr.Microphone() as source2:
@@ -70,7 +69,6 @@ def playStartSound():
 def playEndSound():
     ps.playsound('end.wav')
 
-
 # Initializing program
 # Registering recognizer with dispatcher
 register = {
@@ -89,8 +87,8 @@ def sigint_handler(sig, frame):
     asyncio.get_event_loop().run_until_complete(send(json.dumps(deregister)))
     sys.exit(0)
 
+# On SIGINT deregister from dispatcher
 signal.signal(signal.SIGINT, sigint_handler)
-
 asyncio.get_event_loop().run_until_complete(send(json.dumps(register)))
 
 # Loop infinitely for user to
