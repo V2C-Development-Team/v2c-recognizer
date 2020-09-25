@@ -10,6 +10,8 @@ import websockets
 import threading
 from _thread import start_new_thread
 import json
+import signal
+import sys
 
 # Sends string to websocket
 async def send(command):
@@ -76,6 +78,19 @@ register = {
     "app": "recognizer",
     "eavesdrop": False,
 }
+
+deregister = {
+    "action": "DEREGISTER_LISTENER",
+    "app": "recognizer"
+}
+
+def sigint_handler(sig, frame):
+    print('Exiting gracefully...')
+    asyncio.get_event_loop().run_until_complete(send(json.dumps(deregister)))
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, sigint_handler)
+
 asyncio.get_event_loop().run_until_complete(send(json.dumps(register)))
 
 # Loop infinitely for user to
