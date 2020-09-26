@@ -11,18 +11,10 @@ import threading
 from _thread import start_new_thread
 import json
 
-# Sends string to websocket
-async def send(command):
-    uri = "ws://127.0.0.1:2585/v1/messages"
-    async with websockets.connect(uri) as websocket:
-        await websocket.send(command)
-
 # Initialize the recognizer
 r = sr.Recognizer()
 
 # This function uses the microphone to turn speech to text
-
-
 def SpeechToText():
     # use the microphone as source for input.
     with sr.Microphone() as source2:
@@ -64,71 +56,83 @@ def FileToText(file):
 def playStartSound():
     ps.playsound('start.wav')
 
-# Plays end sound
+# Plays ending sound
 def playEndSound():
     ps.playsound('end.wav')
 
 
-# Initializing program
-# Registering recognizer with dispatcher
-register = {
-    "action": "REGISTER_LISTENER",
-    "app": "recognizer",
-    "eavesdrop": False,
-}
-asyncio.get_event_loop().run_until_complete(send(json.dumps(register)))
+async def main():
+    uri = "ws://127.0.0.1:2585/v1/messages"
+    #starts the websocket
+    async with websockets.connect(uri) as websocket:
+        # Initializing program
+        # Registering recognizer with dispatcher 
+        register = {
+            "action": "REGISTER_LISTENER",
+            "app": "recognizer",
+            "eavesdrop": False,
+        }
+        await websocket.send(json.dumps(register))
 
-# Loop infinitely for user to
-# speak
+        # Loop infinitely for user to
+        # speak
 
-while(1):
+        while(1):
 
-    # Exception handling to handle
-    # exceptions at the runtime
-    try:
+            # Exception handling to handle
+            # exceptions at the runtime
+            try:
 
-        text = ''
+                text = ''
 
-        print('Say \"blue\" to input command from microphone, say "file" to input from file')
+                print('Say \"blue\" to input command from microphone, say "file" to input from command file')
 
-        text = SpeechToText()
+                text = SpeechToText()
 
-        print("-> "+text)
+                print("-> "+text)
 
-        # uses mic after activation phrase
-        if text == 'blue':
-            print('activation phrase')
-            playStartSoundThread = threading.Thread(target=playStartSound)
-            playStartSoundThread.start()
+                # uses mic after activation phrase
+                if text == 'blue':
+                    print('activation phrase')
+                    playStartSoundThread = threading.Thread(target=playStartSound)
+                    playStartSoundThread.start()
 
-            command = SpeechToText()
-            print('Sphnix heard: ' + command)
-            playEndSoundThread = threading.Thread(target=playEndSound)
-            playEndSoundThread.start()
-            command = json.dumps({
-                "action": "DISPATCH_COMMAND",
-                "command": command,
-            })
-            asyncio.get_event_loop().run_until_complete(send(command))
-        # uses file to send command
-        elif text == 'file':
-            # askes user for file name input
-            name = input('Input file name: ')
-            command = FileToText(name)
-            asyncio.get_event_loop().run_until_complete(send(command))
+                    command = SpeechToText()
+                    print('Command heard: ' + command)
+                    playEndSoundThread = threading.Thread(target=playEndSound)
+                    playEndSoundThread.start()
+                    command = json.dumps({
+                        "action": "DISPATCH_COMMAND",
+                        "command": command,
+                    })
+                    await websocket.send(command)
+                # uses file to send command
+                elif text == 'file':
+                    # askes user for file name input
+                    name = input('Input file name: ')
+                    command = FileToText(name)
+                    print('File command: ' + command)
+                    command = json.dumps({
+                        "action": "DISPATCH_COMMAND",
+                        "command": command,
+                    })
+                    await websocket.send(command)
 
-        # exit condition
-        if text == 'exit':
-            deregister = {
-                "action": "DEREGISTER_LISTENER",
-                "app": "recognizer",
-            }
-            asyncio.get_event_loop().run_until_complete(send(json.dumps(deregister)))
-            time.sleep(0.5)
-            exit()
+                # exit condition
+                if text == 'exit':
+                    deregister = {
+                        "action": "DEREGISTER_LISTENER",
+                        "app": "recognizer",
+                    }
+                    await websocket.send(json.dumps(deregister))
+                    #time.sleep(0.5)
+                    exit()
 
-    except sr.RequestError as e:
-        print("Could not request results; {0}".format(e))
+            except sr.RequestError as e:
+                print("Could not request results; {0}".format(e))
 
-    except sr.UnknownValueError:
-        print("unknown error occured")
+            except sr.UnknownValueError:
+                print("unknown error occured")
+
+#runs the main function as an async function
+asyncio.get_event_loop().run_until_complete(main())
