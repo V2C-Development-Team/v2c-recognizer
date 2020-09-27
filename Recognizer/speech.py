@@ -10,6 +10,8 @@ import websockets
 import threading
 from _thread import start_new_thread
 import json
+import signal
+import sys
 
 # Initialize the recognizer
 r = sr.Recognizer()
@@ -33,8 +35,6 @@ def SpeechToText():
         return text
 
 # This funtion uses a .wav file to turn speech to text
-
-
 def FileToText(file):
     # use the microphone as source for input.
     with sr.AudioFile(file) as source2:
@@ -43,6 +43,7 @@ def FileToText(file):
         # adjust the energy threshold based on
         # the surrounding noise level
         r.adjust_for_ambient_noise(source2, duration=0.2)
+
 
         # listens for the user's input
         audio = r.record(source2)
@@ -60,18 +61,31 @@ def playStartSound():
 def playEndSound():
     ps.playsound('end.wav')
 
-
 async def main():
     uri = "ws://127.0.0.1:2585/v1/messages"
+    
     #starts the websocket
     async with websockets.connect(uri) as websocket:
-        # Initializing program
-        # Registering recognizer with dispatcher 
         register = {
             "action": "REGISTER_LISTENER",
             "app": "recognizer",
             "eavesdrop": False,
         }
+        
+        deregister = {
+            "action": "DEREGISTER_LISTENER",
+            "app": "recognizer"
+        }
+
+        def sigint_handler(sig, frame):
+            print('Exiting gracefully...')
+            await websocket.send(json.dumps(deregister))
+            sys.exit(0)
+
+        # On SIGINT deregister from the dispatcher
+        signal.signal(signal.SIGINT, sigint_handler)
+        
+        # Immediately register the listener with the dispatcher
         await websocket.send(json.dumps(register))
 
         # Loop infinitely for user to
