@@ -10,7 +10,6 @@ import websockets
 import threading
 from _thread import start_new_thread
 import json
-import signal
 import sys
 
 # Initialize the recognizer
@@ -77,14 +76,6 @@ async def main():
             "app": "recognizer"
         }
 
-        def sigint_handler(sig, frame):
-            print('Exiting gracefully...')
-            await websocket.send(json.dumps(deregister))
-            sys.exit(0)
-
-        # On SIGINT deregister from the dispatcher
-        signal.signal(signal.SIGINT, sigint_handler)
-        
         # Immediately register the listener with the dispatcher
         await websocket.send(json.dumps(register))
 
@@ -144,6 +135,11 @@ async def main():
 
             except sr.RequestError as e:
                 print("Could not request results; {0}".format(e))
+
+            except KeyboardInterrupt:
+                await websocket.send(json.dumps(deregister))
+                print("Bye")
+                sys.exit()
 
             except sr.UnknownValueError:
                 print("unknown error occured")
