@@ -189,10 +189,14 @@ deregister = {
 uri = "ws://127.0.0.1:2585/v1/messages"
 ws = create_connection(uri)
 widget = tk.Tk()
+widget.winfo_toplevel().title('Recognizer')
+widget.iconbitmap('speaker.ico')
 widget.geometry("400x240")
 widget.lift()
 widget.call('wm', 'attributes', '.', '-topmost', True)
 
+speakText = tk.Label(text='Say \"blue\" for commands')
+speakText.pack()
 speakImage = tk.PhotoImage(file='speak.png')
 noSpeakImage = tk.PhotoImage(file='nospeak.png')
 speakLabel = tk.Label(widget, image=noSpeakImage)
@@ -222,7 +226,8 @@ def VoiceCommand():
             print('Say \"blue\" to input command from microphone, say "file" to input from command file')
 
             text = SpeechToText()
-
+            if exitFlag == True:
+                exit()
             print("-> "+text)
 
             # uses mic after activation phrase
@@ -234,6 +239,8 @@ def VoiceCommand():
                 playStartSoundThread.start()
 
                 command = SpeechToText()
+                if exitFlag == True:
+                    exit()
                 print('Command heard: ' + command)
                 playEndSoundThread = threading.Thread(target=playEndSound)
                 playEndSoundThread.start()
