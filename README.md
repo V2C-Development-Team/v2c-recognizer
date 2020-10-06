@@ -13,6 +13,8 @@ pip commands for windows:<br>
 `$ pip install pocketsphinx` <br>
 `$ pip install SpeechRecognition pydub` <br>
 `$ pip install websockets` <br>
+`$ pip install websocket-client` <br>
+`$ pip install websocket` <br>
 
 running the program with python 3.6 insde the Recogniser folder:<br>
 `$ python3 speech.py` <br>
