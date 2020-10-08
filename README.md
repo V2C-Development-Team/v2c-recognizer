@@ -15,6 +15,7 @@ pip commands for windows:<br>
 `$ pip install websockets` <br>
 `$ pip install websocket-client` <br>
 `$ pip install websocket` <br>
+`$ pip install keyboard` <br>
 
 running the program with python 3.6 insde the Recogniser folder:<br>
 `$ python3 speech.py` <br>
