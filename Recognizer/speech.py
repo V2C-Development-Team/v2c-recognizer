@@ -12,6 +12,7 @@ from _thread import start_new_thread
 import json
 import sys
 import tkinter as tk
+from tkinter import filedialog
 import websocket
 import keyboard
 
@@ -194,7 +195,26 @@ def hotKey():
         listening = False
         keyboard.add_hotkey('ctrl+v', hotKey)
 
+
 keyboard.add_hotkey('ctrl+v', hotKey)
+
+
+def FileToTextButton():
+    filename = filedialog.askopenfilename(
+        initialdir="/", title="Select file", filetypes=[("wav files", "*.wav")])
+    print(filename)
+    text = FileToText(filename)
+    command = json.dumps({
+        "action": "DISPATCH_COMMAND",
+        "command": text,
+    })
+    ws.send(command)
+
+
+fileButton = tk.Button(widget, height=1, width=20,
+                       text="Select Audiofile", command=FileToTextButton)
+fileButton.pack()
+
 
 # setting up threads
 voiceCommandThread = threading.Thread(target=VoiceCommand)
