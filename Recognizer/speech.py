@@ -12,7 +12,7 @@ from _thread import start_new_thread
 import json
 import sys
 import tkinter as tk
-from websocket import create_connection
+import websocket
 
 # Initialize the recognizer
 r = sr.Recognizer()
@@ -187,7 +187,7 @@ deregister = {
     "app": "recognizer"
 }
 uri = "ws://127.0.0.1:2585/v1/messages"
-ws = create_connection(uri)
+ws = websocket.WebSocket()
 widget = tk.Tk()
 widget.winfo_toplevel().title('Recognizer')
 widget.iconbitmap('speaker.ico')
@@ -267,8 +267,6 @@ def VoiceCommand():
 
 
 
-#starting the program
-ws.send(json.dumps(register))
 
 #setting up threads
 voiceCommandThread = threading.Thread(target=VoiceCommand)
@@ -281,8 +279,22 @@ def on_quit():
     global widget, exitFlag
     exitFlag = True
     widget.destroy()
-voiceCommandThread.start()
+
 widget.protocol("WM_DELETE_WINDOW", on_quit)
+
+connected = False
+while(not connected):
+    try:
+        ws.connect(uri)
+        connected = True
+    except:
+        print('Connecting')
+        time.sleep(1)
+#starting the program
+ws.send(json.dumps(register))
+
+voiceCommandThread.start()
+
 widget.mainloop()
 
 #exitting
