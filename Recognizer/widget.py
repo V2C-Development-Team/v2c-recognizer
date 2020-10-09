@@ -1,48 +1,35 @@
-import tkinter as tk
-import asyncio
-import websockets
-import json
+import websocket
+try:
+    import thread
+except ImportError:
+    import _thread as thread
+import time
 
-# Sends string to websocket
-async def send(command):
-    uri = "ws://127.0.0.1:2585/v1/messages"
-    async with websockets.connect(uri) as websocket:
-        await websocket.send(command)
+def on_message(ws, message):
+    print(message)
 
-# Initializing program
-# Registering recognizer with dispatcher
-register = {
-    "action": "REGISTER_LISTENER",
-    "app": "widget",
-    "eavesdrop": False,
-}
+def on_error(ws, error):
+    print(error)
 
-deregister = {
-    "action": "DEREGISTER_LISTENER",
-    "app": "widget"
-}
+def on_close(ws):
+    print("### closed ###")
 
-asyncio.get_event_loop().run_until_complete(send(json.dumps(register)))
+def on_open(ws):
+    def run(*args):
+        for i in range(3):
+            time.sleep(1)
+            ws.send("Hello %d" % i)
+        time.sleep(1)
+        ws.close()
+        print("thread terminating...")
+    thread.start_new_thread(run, ())
 
-# Widget
-widget = tk.Tk()
-widget.geometry("400x240")
-widget.lift()
-widget.call('wm', 'attributes', '.', '-topmost', True)
 
-def sendCommand():
-    result = txtCommand.get("1.0", "end")
-    payload = {
-        "action": "DISPATCH_COMMAND",
-        "command": result.strip(),
-        "recipient": "desktop"
-    }
-    asyncio.get_event_loop().run_until_complete(send(json.dumps(payload)))
-
-txtCommand=tk.Text(widget, height=1)
-txtCommand.pack()
-btnSend=tk.Button(widget, height=1, width=10, text="Send", command=sendCommand)
-btnSend.pack()
-widget.mainloop()
-
-asyncio.get_event_loop().run_until_complete(send(json.dumps(deregister)))
+if __name__ == "__main__":
+    websocket.enableTrace(True)
+    ws = websocket.WebSocketApp("ws://127.0.0.1:2585/v1/messages",
+                              on_message = on_message,
+                              on_error = on_error,
+                              on_close = on_close)
+    ws.on_open = on_open
+    ws.run_forever()

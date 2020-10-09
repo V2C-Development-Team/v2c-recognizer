@@ -21,12 +21,35 @@ r = sr.Recognizer()
 
 exitFlag = False
 listening = False
+connected = False
 # This function uses the microphone to turn speech to text
 
+#setting up websocket
+ws = websocket.WebSocket()
+widget = tk.Tk()
+widget.winfo_toplevel().title('Recognizer')
+widget.iconbitmap('speaker.ico')
+widget.geometry("300x540")
+widget.lift()
+widget.call('wm', 'attributes', '.', '-topmost', True)
+
+speakText = tk.Label(text='Say \"blue\" for commands, or alt+ctrl+v')
+speakText.pack()
+
+micOffImage = tk.PhotoImage(file='micoff.png')
+micOnImage = tk.PhotoImage(file='micon.png')
+micLabel = tk.Label(widget, image=micOffImage)
+micLabel.pack()
+speakImage = tk.PhotoImage(file='speak.png')
+noSpeakImage = tk.PhotoImage(file='nospeak.png')
+speakLabel = tk.Label(widget, image=noSpeakImage)
+speakLabel.pack()
 
 def SpeechToText():
     # use the microphone as source for input.
     with sr.Microphone() as source2:
+        micLabel.configure(image=micOnImage)
+        micLabel.image = micOnImage
 
         # wait for a second to let the recognizer
         # adjust the energy threshold based on
@@ -35,6 +58,8 @@ def SpeechToText():
 
         # listens for the user's input
         audio = r.listen(source2)
+        micLabel.configure(image=micOffImage)
+        micLabel.image = micOffImage
         # Using google to recognize audio
         text = r.recognize_google(audio)
         # converts all text to lower case
@@ -85,20 +110,8 @@ deregister = {
     "app": "recognizer"
 }
 uri = "ws://127.0.0.1:2585/v1/messages"
-ws = websocket.WebSocket()
-widget = tk.Tk()
-widget.winfo_toplevel().title('Recognizer')
-widget.iconbitmap('speaker.ico')
-widget.geometry("400x240")
-widget.lift()
-widget.call('wm', 'attributes', '.', '-topmost', True)
 
-speakText = tk.Label(text='Say \"blue\" for commands, or ctrl+v')
-speakText.pack()
-speakImage = tk.PhotoImage(file='speak.png')
-noSpeakImage = tk.PhotoImage(file='nospeak.png')
-speakLabel = tk.Label(widget, image=noSpeakImage)
-speakLabel.pack()
+
 
 
 def SendCommand():
@@ -130,7 +143,7 @@ def VoiceCommand():
 
             # uses mic after activation phrase
             if text == 'blue' and listening == False:
-                keyboard.remove_hotkey('ctrl+v')
+                keyboard.remove_hotkey('alt+ctrl+v')
                 listening = True
                 speakLabel.configure(image=speakImage)
                 speakLabel.image = speakImage
@@ -154,7 +167,7 @@ def VoiceCommand():
                 })
                 ws.send(command)
                 listening = False
-                keyboard.add_hotkey('ctrl+v', hotKey)
+                keyboard.add_hotkey('alt+ctrl+v', hotKey)
         except sr.RequestError as e:
             print("Could not request results; {0}".format(e))
 
@@ -168,7 +181,7 @@ def VoiceCommand():
 
 def hotKey():
     global listening
-    keyboard.remove_hotkey('ctrl+v')
+    keyboard.remove_hotkey('alt+ctrl+v')
     if listening == False:
         listening = True
         speakLabel.configure(image=speakImage)
@@ -193,10 +206,10 @@ def hotKey():
         })
         ws.send(command)
         listening = False
-        keyboard.add_hotkey('ctrl+v', hotKey)
+        keyboard.add_hotkey('alt+ctrl+v', hotKey)
 
 
-keyboard.add_hotkey('ctrl+v', hotKey)
+keyboard.add_hotkey('alt+ctrl+v', hotKey)
 
 
 def FileToTextButton():
@@ -211,19 +224,24 @@ def FileToTextButton():
     ws.send(command)
 
 
-fileButton = tk.Button(widget, height=1, width=20,
-                       text="Select Audiofile", command=FileToTextButton)
-fileButton.pack()
-
-
 # setting up threads
 voiceCommandThread = threading.Thread(target=VoiceCommand)
 
 txtCommand = tk.Text(widget, height=1)
-txtCommand.pack()
+txtCommand.pack( pady=15, )
 btnSend = tk.Button(widget, height=1, width=10,
                     text="Send", command=SendCommand)
-btnSend.pack()
+
+
+btnSend.pack(pady=15)
+
+
+speakText = tk.Label(text='Select and audio file to become a command')
+speakText.pack(pady = 20)
+
+fileButton = tk.Button(widget, height=1, width=20,
+                       text="Select Audiofile", command=FileToTextButton)
+fileButton.pack(pady=15)
 
 
 def on_quit():
@@ -234,17 +252,55 @@ def on_quit():
 
 widget.protocol("WM_DELETE_WINDOW", on_quit)
 
-connected = False
+
 while(not connected):
     try:
         ws.connect(uri)
         connected = True
     except:
-        print('Connecting')
+        e = sys.exc_info()[0]
+        connected = False
+        print('not connected: ' + str(e))
         time.sleep(1)
+
+def checkConnection():
+    global connected, ws
+    errorConnected = connected
+    while not exitFlag:
+        try:
+            if not errorConnected:
+                try:
+                    ws = None
+                    ws = websocket.WebSocket()
+                    ws.connect(uri)
+                    errorConnected = True
+                except:
+                    print('Connecting')
+                    time.sleep(1)
+            check = ws.recv()
+            if(check):
+                connected = True
+                errorConnected = True
+                print('check ' + check)
+            else:
+                print('not connected')
+                connected = False
+                errorConnected = True
+                time.sleep(1)
+        except:
+            e = sys.exc_info()[0]
+            errorConnected = False
+            connected = False
+            
+            print('not connected: ' + str(e))
+            time.sleep(1)
+
+
+dispatcherThread = threading.Thread(target=checkConnection)
+
 # starting the program
 ws.send(json.dumps(register))
-
+dispatcherThread.start()
 voiceCommandThread.start()
 
 widget.mainloop()
@@ -252,6 +308,7 @@ widget.mainloop()
 # exitting
 
 voiceCommandThread.join()
+dispatcherThread.join()
 print('exit')
 ws.send(json.dumps(deregister))
 
