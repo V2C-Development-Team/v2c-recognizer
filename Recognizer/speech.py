@@ -63,7 +63,11 @@ def SpeechToText():
 
         # listens for the user's input
         try:
-            audio = r.listen(source2, timeout = 3)
+            audio = None
+            if listening:
+                audio = r.listen(source2, timeout = 3)
+            else:
+                audio = r.listen(source2, timeout = 3, phrase_time_limit=3)
             micLabel.configure(image=micOffImage)
             micLabel.image = micOffImage
             # Using google to recognize audio
