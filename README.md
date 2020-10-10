@@ -12,7 +12,6 @@ pip commands for windows:<br>
 `$ pip install playsound`<br>
 `$ pip install pocketsphinx` <br>
 `$ pip install SpeechRecognition pydub` <br>
-`$ pip install websockets` <br>
 `$ pip install websocket-client` <br>
 `$ pip install websocket` <br>
 `$ pip install keyboard` <br>
