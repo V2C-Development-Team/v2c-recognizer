@@ -6,7 +6,6 @@ import speech_recognition as sr
 import playsound as ps
 import time
 import asyncio
-import websockets
 import threading
 from _thread import start_new_thread
 import json
