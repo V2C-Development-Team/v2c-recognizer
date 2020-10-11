@@ -71,7 +71,11 @@ def SpeechToText():
             micLabel.configure(image=micOffImage)
             micLabel.image = micOffImage
             # Using google to recognize audio
-            text = r.recognize_google(audio)
+            try:
+                text = r.recognize_google(audio)
+            except:
+                print('transulate error')
+                return ''
             # converts all text to lower case
             text = text.lower()
             return text
