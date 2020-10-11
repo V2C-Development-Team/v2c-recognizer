@@ -65,13 +65,17 @@ def SpeechToText():
         try:
             audio = None
             if listening:
-                audio = r.listen(source2, timeout = 3)
+                audio = r.listen(source2)
             else:
-                audio = r.listen(source2, timeout = 3, phrase_time_limit=3)
+                audio = r.listen(source2, phrase_time_limit=3)
             micLabel.configure(image=micOffImage)
             micLabel.image = micOffImage
             # Using google to recognize audio
-            text = r.recognize_google(audio)
+            try:
+                text = r.recognize_google(audio)
+            except:
+                print('transulate error')
+                return ''
             # converts all text to lower case
             text = text.lower()
             return text
