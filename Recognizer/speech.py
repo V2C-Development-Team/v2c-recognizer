@@ -165,29 +165,37 @@ def VoiceCommand():
                 # changes speaker picture to active
                 speakLabel.configure(image=speakImage)
                 speakLabel.image = speakImage
-                print('activation phrase')
-                playStartSoundThread = threading.Thread(target=playStartSound)
-                playStartSoundThread.start()
+                exitPhrase = ''
+                while exitPhrase != 'green':
+                    print('activation phrase')
+                    playStartSoundThread = threading.Thread(target=playStartSound)
+                    playStartSoundThread.start()
 
-                command = SpeechToText()
-                if exitFlag == True:
-                    exit()
-                print('Command heard: ' + command)
-                playEndSoundThread = threading.Thread(target=playEndSound)
-                playEndSoundThread.start()
+                    command = SpeechToText()
+                    if exitFlag == True:
+                        exit()
+                    print('Command heard: ' + command)
+                    playEndSoundThread = threading.Thread(target=playEndSound)
+                    playEndSoundThread.start()
+                    
+                    # placed new command in text box
+                    txtCommand.delete("1.0", "end")
+                    txtCommand.insert("1.0", command)
+                    # converts command to JSON
+                    if command.find('green') != -1:
+                        command = command[0:command.find('green')]
+                        print(command)
+                        exitPhrase = 'green'
+                    payload = json.dumps({
+                        "action": "DISPATCH_COMMAND",
+                        "command": command,
+                    })
+                    # send command
+                    ws.send(payload)
+
                 # changes speaker picture to inactive
                 speakLabel.configure(image=noSpeakImage)
                 speakLabel.image = noSpeakImage
-                # placed new command in text box
-                txtCommand.delete("1.0", "end")
-                txtCommand.insert("1.0", command)
-                # converts command to JSON
-                command = json.dumps({
-                    "action": "DISPATCH_COMMAND",
-                    "command": command,
-                })
-                # send command
-                ws.send(command)
                 listening = False
                 # enables hot key
                 keyboard.add_hotkey('alt+ctrl+v', hotKey)
