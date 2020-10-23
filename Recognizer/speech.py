@@ -35,6 +35,12 @@ widget.geometry("300x540")
 widget.lift()
 widget.call('wm', 'attributes', '.', '-topmost', True)
 
+# connection pic 
+redDotImage = tk.PhotoImage(file='reddot.png')
+greenDotImage = tk.PhotoImage(file='greendot.png')
+connectionLabel = tk.Label(widget, image=redDotImage)
+connectionLabel.pack()
+
 # text on top of the widget
 speakText = tk.Label(text='Say \"blue\" for commands, or alt+ctrl+v')
 speakText.pack()
@@ -134,6 +140,8 @@ def SendCommand():
         "command": result.strip(),
         "recipient": "desktop"
     }
+    while not connected:
+        time.sleep(1)
     ws.send(json.dumps(payload))
 
 # Starts the Voice command thread
@@ -190,6 +198,8 @@ def VoiceCommand():
                         "action": "DISPATCH_COMMAND",
                         "command": command,
                     })
+                    while not connected:
+                        time.sleep(1)
                     # send command
                     ws.send(payload)
 
@@ -241,6 +251,8 @@ def hotKey():
             "action": "DISPATCH_COMMAND",
             "command": command,
         })
+        while not connected:
+            time.sleep(1)
         # sends command
         ws.send(command)
         listening = False
@@ -263,6 +275,8 @@ def FileToTextButton():
         "action": "DISPATCH_COMMAND",
         "command": text,
     })
+    while not connected:
+        time.sleep(1)
     # sends command
     ws.send(command)
 
@@ -297,6 +311,7 @@ def on_quit():
 widget.protocol("WM_DELETE_WINDOW", on_quit)
 
 # makes sure to connect to dispatcher before starting widget
+'''
 while(not connected):
     try:
         ws.connect(uri)
@@ -306,36 +321,46 @@ while(not connected):
         connected = False
         print('not connected: ' + str(e))
         time.sleep(1)
-
+'''
 # checks connection while the program is runnuing
 def checkConnection():
     # variables shared between threads
     global connected, ws
     errorConnected = connected
+    #time.sleep(2)
     # runs as long as the widget is running
     while not exitFlag:
         try:
-            if not errorConnected:
+            while not connected:
                 try:
                     # error reconncting
                     ws = None
                     ws = websocket.WebSocket()
                     ws.connect(uri)
+                    ws.send(json.dumps(register))
+                    connectionLabel.configure(image=greenDotImage)
+                    connectionLabel.image = greenDotImage
                     errorConnected = True
+                    connected = True
                 except:
                     print('Connecting')
+                    connectionLabel.configure(image=redDotImage)
+                    connectionLabel.image = redDotImage
                     time.sleep(1)
             # recieves messaged from dispatcher
-            ws.settimeout(40)
             check = ws.recv()
             if(check):
                 connected = True
                 errorConnected = True
                 print('check ' + check)
+                connectionLabel.configure(image=greenDotImage)
+                connectionLabel.image = greenDotImage
             else:
                 print('not connected')
                 connected = False
                 errorConnected = True
+                connectionLabel.configure(image=redDotImage)
+                connectionLabel.image = redDotImage
                 time.sleep(1)
         except:
             e = sys.exc_info()[0]
@@ -349,7 +374,7 @@ def checkConnection():
 dispatcherThread = threading.Thread(target=checkConnection)
 
 # starting the program
-ws.send(json.dumps(register))
+#ws.send(json.dumps(register))
 dispatcherThread.start()
 voiceCommandThread.start()
 
