@@ -14,6 +14,8 @@ import tkinter as tk
 from tkinter import filedialog
 import websocket
 import keyboard
+import sys
+import os
 
 # Initialize the recognizer
 r = sr.Recognizer()
@@ -23,6 +25,7 @@ exitFlag = False
 listening = False
 connected = False
 # This function uses the microphone to turn speech to text
+
 
 #setting up websocket
 ws = websocket.WebSocket()
@@ -280,6 +283,17 @@ def FileToTextButton():
     # sends command
     ws.send(command)
 
+def SystemVolume():
+    global listening
+    maxVolume = 65535
+    listenVolume = maxVolume * 0.2
+    while True:
+        if sys.platform == 'win32':
+            if listening:
+                os.system('.\\nircmdc.exe setsysvolume ' + str(int(listenVolume)))
+            else:
+                os.system('.\\nircmdc.exe setsysvolume ' + str(int(maxVolume*0.5)))
+            time.sleep(0.3)
 
 # setting up VoiceCommand thread
 voiceCommandThread = threading.Thread(target=VoiceCommand)
@@ -372,9 +386,11 @@ def checkConnection():
 
 # sets up dispatcher check thread
 dispatcherThread = threading.Thread(target=checkConnection)
+volumeThread = threading.Thread(target=SystemVolume)
 
 # starting the program
 #ws.send(json.dumps(register))
+volumeThread.start()
 dispatcherThread.start()
 voiceCommandThread.start()
 
