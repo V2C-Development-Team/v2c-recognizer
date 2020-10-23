@@ -159,6 +159,7 @@ def VoiceCommand():
         try:
 
             text = ''
+            commandFlag = False
 
             print(
                 'Say \"blue\" to input command from microphone, say "file" to input from command file')
@@ -169,7 +170,21 @@ def VoiceCommand():
             print("-> "+text)
 
             # uses mic after activation phrase
-            if text == 'blue' and listening == False:
+            tmp = text.find('blue')
+            if tmp != -1:
+                commandFlag = True
+                payload = json.dumps({
+                    "action": "DISPATCH_COMMAND",
+                    "command": text[tmp+4:len(text)],
+                })
+                txtCommand.delete("1.0", "end")
+                txtCommand.insert("1.0", text[tmp+4:len(text)])
+                while not connected:
+                    time.sleep(1)
+                # send command
+                ws.send(payload)
+
+            if commandFlag and listening == False:
                 # disables hot key
                 keyboard.remove_hotkey('alt+ctrl+v')
                 listening = True
@@ -188,15 +203,15 @@ def VoiceCommand():
                     print('Command heard: ' + command)
                     playEndSoundThread = threading.Thread(target=playEndSound)
                     playEndSoundThread.start()
-                    
-                    # placed new command in text box
-                    txtCommand.delete("1.0", "end")
-                    txtCommand.insert("1.0", command)
-                    # converts command to JSON
                     if command.find('green') != -1:
                         command = command[0:command.find('green')]
                         print(command)
                         exitPhrase = 'green'
+                    # placed new command in text box
+                    txtCommand.delete("1.0", "end")
+                    txtCommand.insert("1.0", command)
+                    # converts command to JSON
+                    
                     payload = json.dumps({
                         "action": "DISPATCH_COMMAND",
                         "command": command,
@@ -284,10 +299,10 @@ def FileToTextButton():
     ws.send(command)
 
 def SystemVolume():
-    global listening
+    global listening, exitFlag
     maxVolume = 65535
     listenVolume = maxVolume * 0.2
-    while True:
+    while True and not exitFlag:
         if sys.platform == 'win32':
             if listening:
                 os.system('.\\nircmdc.exe setsysvolume ' + str(int(listenVolume)))
