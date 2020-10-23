@@ -17,6 +17,24 @@ import keyboard
 import sys
 import os
 
+# volume change
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+import math
+
+# Get default audio device using PyCAW
+devices = AudioUtilities.GetSpeakers()
+interface = devices.Activate(
+    IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+volume = cast(interface, POINTER(IAudioEndpointVolume))
+# Get current volume 
+#volume.SetMasterVolumeLevel(currentVolumeDb - 6.0, None)
+#currentVolumeDb = volume.GetMasterVolumeLevel()
+#print(currentVolumeDb)
+# NOTE: -6.0 dB = half volume !
+
+
 # Initialize the recognizer
 r = sr.Recognizer()
 
@@ -300,15 +318,16 @@ def FileToTextButton():
 
 def SystemVolume():
     global listening, exitFlag
-    maxVolume = 65535
-    listenVolume = maxVolume * 0.2
     while True and not exitFlag:
-        if sys.platform == 'win32':
-            if listening:
-                os.system('.\\nircmdc.exe setsysvolume ' + str(int(listenVolume)))
-            else:
-                os.system('.\\nircmdc.exe setsysvolume ' + str(int(maxVolume*0.5)))
-            time.sleep(0.3)
+        currentVolume = volume.GetMasterVolumeLevelScalar()
+        print('Current volume: ' + str(currentVolume))
+        if listening:
+            if currentVolume > 0.2:
+                volume.SetMasterVolumeLevelScalar(0.2, None)
+                while listening:
+                    time.sleep(0.2)
+                volume.SetMasterVolumeLevelScalar(currentVolume, None)
+        time.sleep(0.2)
 
 # setting up VoiceCommand thread
 voiceCommandThread = threading.Thread(target=VoiceCommand)
