@@ -14,6 +14,26 @@ import tkinter as tk
 from tkinter import filedialog
 import websocket
 import keyboard
+import sys
+import os
+
+# volume change
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+import math
+
+# Get default audio device using PyCAW
+devices = AudioUtilities.GetSpeakers()
+interface = devices.Activate(
+    IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+volume = cast(interface, POINTER(IAudioEndpointVolume))
+# Get current volume 
+#volume.SetMasterVolumeLevel(currentVolumeDb - 6.0, None)
+#currentVolumeDb = volume.GetMasterVolumeLevel()
+#print(currentVolumeDb)
+# NOTE: -6.0 dB = half volume !
+
 
 # Initialize the recognizer
 r = sr.Recognizer()
@@ -23,6 +43,7 @@ exitFlag = False
 listening = False
 connected = False
 # This function uses the microphone to turn speech to text
+
 
 #setting up websocket
 ws = websocket.WebSocket()
@@ -34,6 +55,12 @@ widget.iconbitmap('speaker.ico')
 widget.geometry("300x540")
 widget.lift()
 widget.call('wm', 'attributes', '.', '-topmost', True)
+
+# connection pic 
+redDotImage = tk.PhotoImage(file='reddot.png')
+greenDotImage = tk.PhotoImage(file='greendot.png')
+connectionLabel = tk.Label(widget, image=redDotImage)
+connectionLabel.pack()
 
 # text on top of the widget
 speakText = tk.Label(text='Say \"blue\" for commands, or alt+ctrl+v')
@@ -134,6 +161,8 @@ def SendCommand():
         "command": result.strip(),
         "recipient": "desktop"
     }
+    while not connected:
+        time.sleep(1)
     ws.send(json.dumps(payload))
 
 # Starts the Voice command thread
@@ -148,6 +177,7 @@ def VoiceCommand():
         try:
 
             text = ''
+            commandFlag = False
 
             print(
                 'Say \"blue\" to input command from microphone, say "file" to input from command file')
@@ -158,36 +188,60 @@ def VoiceCommand():
             print("-> "+text)
 
             # uses mic after activation phrase
-            if text == 'blue' and listening == False:
+            tmp = text.find('blue')
+            if tmp != -1:
+                commandFlag = True
+                payload = json.dumps({
+                    "action": "DISPATCH_COMMAND",
+                    "command": text[tmp+4:len(text)],
+                })
+                txtCommand.delete("1.0", "end")
+                txtCommand.insert("1.0", text[tmp+4:len(text)])
+                while not connected:
+                    time.sleep(1)
+                # send command
+                ws.send(payload)
+
+            if commandFlag and listening == False:
                 # disables hot key
                 keyboard.remove_hotkey('alt+ctrl+v')
                 listening = True
                 # changes speaker picture to active
                 speakLabel.configure(image=speakImage)
                 speakLabel.image = speakImage
-                print('activation phrase')
-                playStartSoundThread = threading.Thread(target=playStartSound)
-                playStartSoundThread.start()
+                exitPhrase = ''
+                while exitPhrase != 'green':
+                    print('activation phrase')
+                    playStartSoundThread = threading.Thread(target=playStartSound)
+                    playStartSoundThread.start()
 
-                command = SpeechToText()
-                if exitFlag == True:
-                    exit()
-                print('Command heard: ' + command)
-                playEndSoundThread = threading.Thread(target=playEndSound)
-                playEndSoundThread.start()
+                    command = SpeechToText()
+                    if exitFlag == True:
+                        exit()
+                    print('Command heard: ' + command)
+                    playEndSoundThread = threading.Thread(target=playEndSound)
+                    playEndSoundThread.start()
+                    if command.find('green') != -1:
+                        command = command[0:command.find('green')]
+                        print(command)
+                        exitPhrase = 'green'
+                    # placed new command in text box
+                    txtCommand.delete("1.0", "end")
+                    txtCommand.insert("1.0", command)
+                    # converts command to JSON
+                    
+                    payload = json.dumps({
+                        "action": "DISPATCH_COMMAND",
+                        "command": command,
+                    })
+                    while not connected:
+                        time.sleep(1)
+                    # send command
+                    ws.send(payload)
+
                 # changes speaker picture to inactive
                 speakLabel.configure(image=noSpeakImage)
                 speakLabel.image = noSpeakImage
-                # placed new command in text box
-                txtCommand.delete("1.0", "end")
-                txtCommand.insert("1.0", command)
-                # converts command to JSON
-                command = json.dumps({
-                    "action": "DISPATCH_COMMAND",
-                    "command": command,
-                })
-                # send command
-                ws.send(command)
                 listening = False
                 # enables hot key
                 keyboard.add_hotkey('alt+ctrl+v', hotKey)
@@ -233,6 +287,8 @@ def hotKey():
             "action": "DISPATCH_COMMAND",
             "command": command,
         })
+        while not connected:
+            time.sleep(1)
         # sends command
         ws.send(command)
         listening = False
@@ -255,9 +311,23 @@ def FileToTextButton():
         "action": "DISPATCH_COMMAND",
         "command": text,
     })
+    while not connected:
+        time.sleep(1)
     # sends command
     ws.send(command)
 
+def SystemVolume():
+    global listening, exitFlag
+    while True and not exitFlag:
+        currentVolume = volume.GetMasterVolumeLevelScalar()
+        print('Current volume: ' + str(currentVolume))
+        if listening:
+            if currentVolume > 0.2:
+                volume.SetMasterVolumeLevelScalar(0.2, None)
+                while listening:
+                    time.sleep(0.2)
+                volume.SetMasterVolumeLevelScalar(currentVolume, None)
+        time.sleep(0.2)
 
 # setting up VoiceCommand thread
 voiceCommandThread = threading.Thread(target=VoiceCommand)
@@ -289,6 +359,7 @@ def on_quit():
 widget.protocol("WM_DELETE_WINDOW", on_quit)
 
 # makes sure to connect to dispatcher before starting widget
+'''
 while(not connected):
     try:
         ws.connect(uri)
@@ -298,36 +369,46 @@ while(not connected):
         connected = False
         print('not connected: ' + str(e))
         time.sleep(1)
-
+'''
 # checks connection while the program is runnuing
 def checkConnection():
     # variables shared between threads
     global connected, ws
     errorConnected = connected
+    #time.sleep(2)
     # runs as long as the widget is running
     while not exitFlag:
         try:
-            if not errorConnected:
+            while not connected:
                 try:
                     # error reconncting
                     ws = None
                     ws = websocket.WebSocket()
                     ws.connect(uri)
+                    ws.send(json.dumps(register))
+                    connectionLabel.configure(image=greenDotImage)
+                    connectionLabel.image = greenDotImage
                     errorConnected = True
+                    connected = True
                 except:
                     print('Connecting')
+                    connectionLabel.configure(image=redDotImage)
+                    connectionLabel.image = redDotImage
                     time.sleep(1)
             # recieves messaged from dispatcher
-            ws.settimeout(40)
             check = ws.recv()
             if(check):
                 connected = True
                 errorConnected = True
                 print('check ' + check)
+                connectionLabel.configure(image=greenDotImage)
+                connectionLabel.image = greenDotImage
             else:
                 print('not connected')
                 connected = False
                 errorConnected = True
+                connectionLabel.configure(image=redDotImage)
+                connectionLabel.image = redDotImage
                 time.sleep(1)
         except:
             e = sys.exc_info()[0]
@@ -339,9 +420,11 @@ def checkConnection():
 
 # sets up dispatcher check thread
 dispatcherThread = threading.Thread(target=checkConnection)
+volumeThread = threading.Thread(target=SystemVolume)
 
 # starting the program
-ws.send(json.dumps(register))
+#ws.send(json.dumps(register))
+volumeThread.start()
 dispatcherThread.start()
 voiceCommandThread.start()
 
