@@ -35,7 +35,7 @@ from PIL import Image, ImageDraw
 exitFlag = False
 listening = False
 connected = False
-
+micIndex = 0
 
 
 
@@ -55,6 +55,8 @@ volume = cast(interface, POINTER(IAudioEndpointVolume))
 # Initialize the recognizer
 r = sr.Recognizer()
 
+#list of microphones
+microphones = sr.Microphone.list_microphone_names()
 
 # This function uses the microphone to turn speech to text
 
@@ -77,7 +79,7 @@ connectionLabel = tk.Label(widget, image=redDotImage)
 connectionLabel.pack()
 
 # text on top of the widget
-speakText = tk.Label(text='Say \"blue\" for commands, or alt+ctrl+v')
+speakText = tk.Label(text='Say \"vicky\" for commands, or alt+ctrl+v')
 speakText.pack()
 
 # mic pitures
@@ -93,7 +95,7 @@ speakLabel.pack()
 
 def SpeechToText():
     # use the microphone as source for input.
-    with sr.Microphone() as source2:
+    with sr.Microphone(device_index = micIndex) as source2:
         micLabel.configure(image=micOnImage)
         micLabel.image = micOnImage
 
@@ -202,15 +204,15 @@ def VoiceCommand():
             print("-> "+text)
 
             # uses mic after activation phrase
-            tmp = text.find('blue')
+            tmp = text.find('vicky')
             if tmp != -1:
                 commandFlag = True
                 payload = json.dumps({
                     "action": "DISPATCH_COMMAND",
-                    "command": text[tmp+4:len(text)],
+                    "command": text[tmp+5:len(text)],
                 })
                 txtCommand.delete("1.0", "end")
-                txtCommand.insert("1.0", text[tmp+4:len(text)])
+                txtCommand.insert("1.0", text[tmp+5:len(text)])
                 while not connected:
                     time.sleep(1)
                 # send command
@@ -224,7 +226,7 @@ def VoiceCommand():
                 speakLabel.configure(image=speakImage)
                 speakLabel.image = speakImage
                 exitPhrase = ''
-                while exitPhrase != 'green':
+                while not exitPhrase:
                     print('activation phrase')
                     playStartSoundThread = threading.Thread(target=playStartSound)
                     playStartSoundThread.start()
@@ -235,10 +237,10 @@ def VoiceCommand():
                     print('Command heard: ' + command)
                     playEndSoundThread = threading.Thread(target=playEndSound)
                     playEndSoundThread.start()
-                    if command.find('green') != -1:
-                        command = command[0:command.find('green')]
+                    if command.find('vicky') != -1:
+                        command = command[0:command.find('vicky')]
                         print(command)
-                        exitPhrase = 'green'
+                        exitPhrase = True
                     # placed new command in text box
                     txtCommand.delete("1.0", "end")
                     txtCommand.insert("1.0", command)
@@ -397,7 +399,7 @@ def IconThread():
     icon.run(setup)
 
 iconThread = threading.Thread(target=IconThread)
-iconThread.start()
+#iconThread.start()
 # checks connection while the program is runnuing
 def checkConnection():
     # variables shared between threads
@@ -465,6 +467,5 @@ voiceCommandThread.join()
 dispatcherThread.join()
 print('exit')
 ws.send(json.dumps(deregister))
-
 # runs the main function as an async function
 # asyncio.get_event_loop().run_until_complete(main())
