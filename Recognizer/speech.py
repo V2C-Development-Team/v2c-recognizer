@@ -23,6 +23,23 @@ from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 import math
 
+# trying pystray
+import pystray
+
+
+
+from PIL import Image, ImageDraw
+
+
+#global checks, to pass be
+exitFlag = False
+listening = False
+connected = False
+
+
+
+
+
 # Get default audio device using PyCAW
 devices = AudioUtilities.GetSpeakers()
 interface = devices.Activate(
@@ -38,10 +55,7 @@ volume = cast(interface, POINTER(IAudioEndpointVolume))
 # Initialize the recognizer
 r = sr.Recognizer()
 
-#global checks, to pass be
-exitFlag = False
-listening = False
-connected = False
+
 # This function uses the microphone to turn speech to text
 
 
@@ -358,18 +372,32 @@ def on_quit():
 # sets up on_quit for when the widget exits
 widget.protocol("WM_DELETE_WINDOW", on_quit)
 
-# makes sure to connect to dispatcher before starting widget
-'''
-while(not connected):
-    try:
-        ws.connect(uri)
-        connected = True
-    except:
-        e = sys.exc_info()[0]
-        connected = False
-        print('not connected: ' + str(e))
-        time.sleep(1)
-'''
+# adding the icon area notification
+def create_image():
+    # Generate an image and draw a pattern
+    image = Image.open('speaker.ico')
+
+    return image
+
+def exitIcon(icon):
+    global widget
+    icon.stop()
+    on_quit()
+
+
+item = (pystray.MenuItem('Close', exitIcon))
+
+icon = pystray.Icon('test name', menu = pystray.Menu(item))
+icon.icon = create_image()
+
+def setup(icon):
+    icon.visible = True
+
+def IconThread():
+    icon.run(setup)
+
+iconThread = threading.Thread(target=IconThread)
+iconThread.start()
 # checks connection while the program is runnuing
 def checkConnection():
     # variables shared between threads
