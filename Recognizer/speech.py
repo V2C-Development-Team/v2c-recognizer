@@ -496,5 +496,6 @@ voiceCommandThread.join()
 dispatcherThread.join()
 print('exit')
 ws.send(json.dumps(deregister))
+iconThread.join()
 # runs the main function as an async function
 # asyncio.get_event_loop().run_until_complete(main())
