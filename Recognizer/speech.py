@@ -426,7 +426,7 @@ def IconThread():
     icon.run(setup)
 
 iconThread = threading.Thread(target=IconThread)
-#iconThread.start()
+iconThread.start()
 
 
 # checks connection while the program is runnuing
