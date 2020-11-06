@@ -66,11 +66,34 @@ ws = websocket.WebSocket()
 
 # setting up Widget
 widget = tk.Tk()
+
 widget.winfo_toplevel().title('Recognizer')
 widget.iconbitmap('speaker.ico')
 widget.geometry("300x540")
 widget.lift()
 widget.call('wm', 'attributes', '.', '-topmost', True)
+
+
+# Add a grid
+'''
+mainframe = tk.Frame(widget)
+mainframe.grid(column=0,row=0, sticky=(tk.N,tk.W,tk.E,tk.S) )
+mainframe.columnconfigure(0, weight = 1)
+mainframe.rowconfigure(0, weight = 1)
+mainframe.pack()
+'''
+#adding the mic dropdown menu
+tkvar = tk.StringVar(widget)
+tkvar.set(microphones[0])
+
+popupMenu = tk.OptionMenu(widget, tkvar, *microphones)
+popupMenu.pack()
+tk.Label(widget, text="Choose a mic")
+#change dropdown menu
+def change_dropdown(*args):
+    print( tkvar.get() )
+
+tkvar.trace('w', change_dropdown)
 
 # connection pic 
 redDotImage = tk.PhotoImage(file='reddot.png')
@@ -336,7 +359,7 @@ def SystemVolume():
     global listening, exitFlag
     while True and not exitFlag:
         currentVolume = volume.GetMasterVolumeLevelScalar()
-        print('Current volume: ' + str(currentVolume))
+        #print('Current volume: ' + str(currentVolume))
         if listening:
             if currentVolume > 0.2:
                 volume.SetMasterVolumeLevelScalar(0.2, None)
@@ -400,6 +423,8 @@ def IconThread():
 
 iconThread = threading.Thread(target=IconThread)
 #iconThread.start()
+
+
 # checks connection while the program is runnuing
 def checkConnection():
     # variables shared between threads
