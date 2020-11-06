@@ -91,7 +91,10 @@ popupMenu.pack()
 tk.Label(widget, text="Choose a mic")
 #change dropdown menu
 def change_dropdown(*args):
+    global micIndex
     print( tkvar.get() )
+    micIndex = microphones.index(tkvar.get())
+    print('dropdown index ' + str(microphones.index(tkvar.get())))
 
 tkvar.trace('w', change_dropdown)
 
@@ -118,6 +121,7 @@ speakLabel.pack()
 
 def SpeechToText():
     # use the microphone as source for input.
+    print('Speech to text index ' + str(micIndex))
     with sr.Microphone(device_index = micIndex) as source2:
         micLabel.configure(image=micOnImage)
         micLabel.image = micOnImage
@@ -131,9 +135,9 @@ def SpeechToText():
         try:
             audio = None
             if listening:
-                audio = r.listen(source2)
+                audio = r.listen(source2, timeout = 40)
             else:
-                audio = r.listen(source2, phrase_time_limit=3)
+                audio = r.listen(source2, phrase_time_limit=3, timeout = 10)
             micLabel.configure(image=micOffImage)
             micLabel.image = micOffImage
             # Using google to recognize audio
