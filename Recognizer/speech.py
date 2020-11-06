@@ -60,9 +60,9 @@ microphones = sr.Microphone.list_microphone_names()
 
 # This function uses the microphone to turn speech to text
 
-
+uri = "ws://127.0.0.1:2585/v1/messages"
 #setting up websocket
-ws = websocket.WebSocket()
+ws = websocket.WebSocket(uri)
 
 # setting up Widget
 widget = tk.Tk()
@@ -192,7 +192,7 @@ deregister = {
     "action": "DEREGISTER_LISTENER",
     "app": "recognizer"
 }
-uri = "ws://127.0.0.1:2585/v1/messages"
+
 
 
 
