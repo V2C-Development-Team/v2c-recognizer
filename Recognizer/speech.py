@@ -421,11 +421,13 @@ icon.icon = create_image()
 
 def setup(icon):
     icon.visible = True
+    #while not
 
 def IconThread():
     icon.run(setup)
 
 iconThread = threading.Thread(target=IconThread)
+iconThread.daemon = True
 iconThread.start()
 
 
@@ -484,7 +486,9 @@ volumeThread = threading.Thread(target=SystemVolume)
 # starting the program
 #ws.send(json.dumps(register))
 volumeThread.start()
+dispatcherThread.daemon = True
 dispatcherThread.start()
+voiceCommandThread.daemon = True
 voiceCommandThread.start()
 
 # starts the widget loop
@@ -492,10 +496,14 @@ widget.mainloop()
 
 # exitting
 # joins threads
-voiceCommandThread.join()
-dispatcherThread.join()
+#voiceCommandThread.join()
+#dispatcherThread.join()
 print('exit')
-ws.send(json.dumps(deregister))
-iconThread.join()
+try:
+    ws.send(json.dumps(deregister))
+except:
+    e = sys.exc_info()[0]
+    print('deregsiter: ' + str(e))
+sys.exit()
 # runs the main function as an async function
 # asyncio.get_event_loop().run_until_complete(main())
